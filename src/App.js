@@ -10,6 +10,8 @@ import {
   Route
 } from "react-router-dom";
 
+const server = process.env.REACT_APP_SERVER;
+
 class App extends React.Component {
   render() {
     return (
