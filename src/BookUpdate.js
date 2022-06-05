@@ -17,7 +17,7 @@ class BookUpdate extends React.Component {
     }
 
     bookUpdateAxios = async (selectedUpdateBook) => {
-        await axios.put(`http://localhost:3001/books/${this.props.book._id}`, selectedUpdateBook);
+        await axios.put(`${process.env.REACT_APP_SERVER}/books/${this.props.book._id}`, selectedUpdateBook);
 
         const updatedBooks = this.props.books.map(preExistingBook => {
             if (preExistingBook._id === selectedUpdateBook._id) {
