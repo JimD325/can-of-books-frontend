@@ -4,13 +4,16 @@ import Carousel from 'react-bootstrap/Carousel';
 import Image from 'react-bootstrap/Image';
 import Button from 'react-bootstrap/Button';
 import BookFormModal from './BookFormModal';
+import BookUpdate from './BookUpdate';
 
 class BestBooks extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
       books: [],
+      selectedUpdateBook: {},
       showModal: false,
+      showUpdateModal: false
     }
   }
   async fetchBooks() {
@@ -31,7 +34,7 @@ class BestBooks extends React.Component {
 
   hideCreateForm = () => {
     this.setState({
-      showModal: false,
+      showModal: false
     })
   }
 
@@ -50,14 +53,35 @@ class BestBooks extends React.Component {
 
   handleBookCreate = async (newBookInfo) => {
     const response = await axios.post(`${process.env.REACT_APP_SERVER}/books`, newBookInfo);
-    // console.log(response.data);
+  
     this.setState({ books: [...this.state.books, response.data] })
-    // this.props.updateCatsArray(response.data);
+ 
   }
 
+  hideUpdateForm = () => {
+    this.setState({
+      selectedUpdateBook: {},
+      showUpdateModal: false
+    });
+  }
+
+  showUpdateForm =() =>{
+    this.setState({
+      showUpdateModal: true
+    })
+  }
+
+  handleBookUpdate = (event, book) => {
+    console.log("Book: ", book);
+    console.log("TYPEOF book: ", typeof book);
+    this.setState({
+      selectedUpdateBook: book,
+      showUpdateModal: true
+    }, console.log("STATE: ", this.state));
+  };
 
   render() {
-    console.log(this.state.books.length);
+    console.log(this.state.showUpdateModal);
     /* TODO: render all the books in a Carousel */
 
     return (
@@ -68,6 +92,15 @@ class BestBooks extends React.Component {
           showModal={this.state.showModal}
           hideCreateForm={this.hideCreateForm}
           handleBookCreate={this.handleBookCreate} />
+        <BookUpdate 
+        books={this.state.books}
+        book={this.state.selectedUpdateBook}
+        handleBookUpdate = {this.handleBookUpdate}
+        hideUpdateForm = {this.hideUpdateForm}
+        onHide = {this.hideUpdateForm}
+        show = {this.state.showUpdateModal}
+        updateFilteredBooks = {this.updateFilteredBooks}
+        />
 
         {this.state.books.length ?
           <Carousel variant='dark'>
@@ -82,8 +115,10 @@ class BestBooks extends React.Component {
                     <Book
                       books={this.state.books}
                       book={book}
-                      // handleUpdateBook={this.handleUpdateBook}
-                      updateFilteredBooks={this.updateFilteredBooks} />
+                      handleBookUpdate={this.handleBookUpdate}
+                      updateFilteredBooks={this.updateFilteredBooks}
+                      show = {this.showUpdateForm}
+                       />
                       
                     </Carousel.Caption>
                   </Carousel.Item>
@@ -110,11 +145,14 @@ class Book extends React.Component {
   }
 
 
+
+
   render() {
     return (
       <>
 
         < Button onClick={event => this.handleBookDelete(event, this.props.book._id)} >Remove Book</Button >
+        <Button onClick={event => this.props.handleBookUpdate(event, this.props.book)}>Update Book</Button>
 
       </>
     )
