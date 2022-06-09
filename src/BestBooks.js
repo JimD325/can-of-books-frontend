@@ -5,6 +5,7 @@ import Image from 'react-bootstrap/Image';
 import Button from 'react-bootstrap/Button';
 import BookFormModal from './BookFormModal';
 import BookUpdate from './BookUpdate';
+import { withAuth0 } from '@auth0/auth0-react';
 
 class BestBooks extends React.Component {
   constructor(props) {
@@ -16,6 +17,37 @@ class BestBooks extends React.Component {
       showUpdateModal: false
     }
   }
+
+  async componentDidMount() {
+    // new for lab 15
+    if (this.props.auth0.isAuthenticated) {
+      const res = await this.props.auth0.getIdTokenClaims();
+      const jwt = res.__raw;
+      
+
+      // leave this console here in order to grab your token for backend testing in Thunder Client
+      console.log('token: ', jwt);
+
+      const config = {
+        headers: { "Authorization": `Bearer ${jwt}` }, // new lab 15
+        method: 'get',
+        baseURL: process.env.REACT_APP_SERVER,
+        url: '/books'
+      }
+
+      const booksResponse = await axios(config);
+
+      console.log("Books from DB: ", booksResponse.data);
+      
+      this.setState({ books: booksResponse.data });
+
+      this.fetchBooks();
+    }
+
+    
+  }
+
+
   async fetchBooks() {
     let apiUrl = `${process.env.REACT_APP_SERVER}/books`;
     try {
@@ -46,10 +78,10 @@ class BestBooks extends React.Component {
 
 
   /* TODO: Make a GET request to your API to fetch all the books from the database  */
-
-  async componentDidMount() {
-    this.fetchBooks();
-  }
+  // below renders the books, commented out to hide from users who are not logged in. 
+  // async componentDidMount() {
+  //   this.fetchBooks();
+  // }
 
   handleBookCreate = async (newBookInfo) => {
     const response = await axios.post(`${process.env.REACT_APP_SERVER}/books`, newBookInfo);
@@ -81,7 +113,6 @@ class BestBooks extends React.Component {
   };
 
   render() {
-    console.log(this.state.showUpdateModal);
     /* TODO: render all the books in a Carousel */
 
     return (
@@ -159,4 +190,4 @@ class Book extends React.Component {
   }
 }
 
-export default BestBooks;
+export default withAuth0(BestBooks);
