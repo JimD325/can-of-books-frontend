@@ -20,43 +20,47 @@ class BestBooks extends React.Component {
 
   async componentDidMount() {
     // new for lab 15
-    if (this.props.auth0.isAuthenticated) {
-      const res = await this.props.auth0.getIdTokenClaims();
-      const jwt = res.__raw;
-      
-
-      // leave this console here in order to grab your token for backend testing in Thunder Client
-      console.log('token: ', jwt);
-
-      const config = {
-        headers: { "Authorization": `Bearer ${jwt}` }, // new lab 15
-        method: 'get',
-        baseURL: process.env.REACT_APP_SERVER,
-        url: '/books'
-      }
-
-      const booksResponse = await axios(config);
-
-      console.log("Books from DB: ", booksResponse.data);
-      
-      this.setState({ books: booksResponse.data });
-
-      this.fetchBooks();
-    }
-
-    
-  }
-
-
-  async fetchBooks() {
-    let apiUrl = `${process.env.REACT_APP_SERVER}/books`;
     try {
-      const response = await axios.get(apiUrl);
-      this.setState({ books: response.data });
+      if (this.props.auth0.isAuthenticated) {
+        const res = await this.props.auth0.getIdTokenClaims();
+        const jwt = res.__raw;
+
+
+        // leave this console here in order to grab your token for backend testing in Thunder Client
+        console.log('token: ', jwt);
+
+        const config = {
+          headers: { "Authorization": `Bearer ${jwt}` }, // new lab 15
+          method: 'get',
+          baseURL: process.env.REACT_APP_SERVER,
+          url: '/books',
+        }
+        console.log(config);
+        const booksResponse = await axios(config);
+        this.setState({ books: booksResponse.data });
+        console.log("Books from DB: ", booksResponse.data);
+
+      }
     } catch (error) {
-      console.log(error);
+      console.error('Error in BestBooks componentDidMount', error);
+      this.setState({
+        errorMessage: `Status Code: ${error.response.status}: ${error.response.data}`
+      })
+      // this.fetchBooks();
     }
   }
+
+
+
+  // async fetchBooks() {
+  //   let apiUrl = `${process.env.REACT_APP_SERVER}/books`;
+  //   try {
+  //     const response = await axios.get(apiUrl);
+  //     this.setState({ books: response.data });
+  //   } catch (error) {
+  //     console.log(error);
+  //   }
+  // }
 
   displayCreateForm = () => {
     this.setState({
@@ -84,11 +88,35 @@ class BestBooks extends React.Component {
   // }
 
   handleBookCreate = async (newBookInfo) => {
-    const response = await axios.post(`${process.env.REACT_APP_SERVER}/books`, newBookInfo);
-  
-    this.setState({ books: [...this.state.books, response.data] })
- 
-  }
+    try {
+      if (this.props.auth0.isAuthenticated) {
+        const res = await this.props.auth0.getIdTokenClaims();
+        const jwt = res.__raw;
+
+        const config = {
+          headers: { "Authorization": `Bearer ${jwt}` },
+          method: "POST",
+          baseURL: process.env.REACT_APP_SERVER,
+          url: '/books',
+          data: newBookInfo
+        };
+
+        const response = await axios(config);
+
+        this.setState({
+          books: [...this.state.books, response.data],
+          errorMessage: ''
+        });
+      }
+
+    }
+    catch (error) {
+      console.error("error in BestBook createBook: ", error);
+      this.setState({
+        errorMessage: `Status Code is ${error.response.status}: ${error.response.data}`,
+      });
+    }
+  };
 
   hideUpdateForm = () => {
     this.setState({
@@ -97,7 +125,7 @@ class BestBooks extends React.Component {
     });
   }
 
-  showUpdateForm =() =>{
+  showUpdateForm = () => {
     this.setState({
       showUpdateModal: true
     })
@@ -106,10 +134,14 @@ class BestBooks extends React.Component {
   handleBookUpdate = (event, book) => {
     console.log("Book: ", book);
     console.log("TYPEOF book: ", typeof book);
+    try {
     this.setState({
       selectedUpdateBook: book,
       showUpdateModal: true
-    }, console.log("STATE: ", this.state));
+    })
+  } catch (error) {
+    console.error(error);
+  }
   };
 
   render() {
@@ -123,46 +155,47 @@ class BestBooks extends React.Component {
           showModal={this.state.showModal}
           hideCreateForm={this.hideCreateForm}
           handleBookCreate={this.handleBookCreate} />
-        <BookUpdate 
-        books={this.state.books}
-        book={this.state.selectedUpdateBook}
-        handleBookUpdate = {this.handleBookUpdate}
-        hideUpdateForm = {this.hideUpdateForm}
-        onHide = {this.hideUpdateForm}
-        show = {this.state.showUpdateModal}
-        updateFilteredBooks = {this.updateFilteredBooks}
+        <BookUpdate
+          books={this.state.books}
+          book={this.state.selectedUpdateBook}
+          handleBookUpdate={this.handleBookUpdate}
+          hideUpdateForm={this.hideUpdateForm}
+          onHide={this.hideUpdateForm}
+          show={this.state.showUpdateModal}
+          updateFilteredBooks={this.updateFilteredBooks}
         />
 
         {this.state.books.length ?
           <Carousel variant='dark'>
             {
               this.state.books.map(book => (
-            
-                  <Carousel.Item key={book._id}>
-                    <Image src="https://via.placeholder.com/150" />
-                    <Carousel.Caption>
-                      <h3>{book.title}</h3>
-                      <p>{book.description}</p>
+
+                <Carousel.Item key={book._id}>
+                  <Image src="https://via.placeholder.com/150" />
+                  <Carousel.Caption>
+                    <h3>{book.title}</h3>
+                    <p>{book.description}</p>
                     <Book
                       books={this.state.books}
                       book={book}
                       handleBookUpdate={this.handleBookUpdate}
                       updateFilteredBooks={this.updateFilteredBooks}
-                      show = {this.showUpdateForm}
-                       />
-                      
-                    </Carousel.Caption>
-                  </Carousel.Item>
+                      show={this.showUpdateForm}
+                    />
+
+                  </Carousel.Caption>
+                </Carousel.Item>
               ))
             }
           </Carousel> : (
             <h3>No Books Found 💩</h3>
           )
-        }
+        };
       </>
     )
-  }
+  };
 }
+
 
 class Book extends React.Component {
 
